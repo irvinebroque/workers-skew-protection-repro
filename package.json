@@ -1,0 +1,21 @@
+{
+	"name": "workers-skew-protection-repro",
+	"private": true,
+	"type": "module",
+	"scripts": {
+		"dev": "cf dev",
+		"build": "cf build",
+		"typecheck": "cf workers types && tsc",
+		"verify": "node scripts/verify.mjs"
+	},
+	"devDependencies": {
+		"@cloudflare/vite-plugin": "beta",
+		"@types/node": "^24.19.2",
+		"cf": "1.0.0-beta.26",
+		"typescript": "^7.0.2",
+		"vite": "^8.3.0"
+	},
+	"engines": {
+		"node": "^22.23.0 || ^24.22.0 || ^26.12.0"
+	}
+}
