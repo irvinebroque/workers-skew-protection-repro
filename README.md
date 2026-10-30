@@ -1,7 +1,39 @@
-# Workers version override repro
+# Workers version skew repro
 
-Serve an asset from a Worker version at **0% traffic** by putting its version ID
-in the asset URL and converting that query parameter into a version override header.
+## The problem
+
+Deploying a new Worker version updates the configuration that tells each edge
+location which version to run. That update takes a few seconds to propagate
+across Cloudflare's edge. During that window, different data centers (colos)
+can route requests to different versions.
+
+Suppose version A is live, and you publish version B. B's HTML references a new
+asset, `/assets/b.js`, that does not exist in A's asset manifest:
+
+```mermaid
+sequenceDiagram
+    participant Browser
+    participant Updated as Colo A (updated to B)
+    participant Stale as Colo B (still using A)
+    Browser->>Updated: GET /
+    Updated-->>Browser: 200 — B's HTML references /assets/b.js
+    Browser->>Stale: GET /assets/b.js
+    Stale-->>Browser: 404 — A does not have that asset
+```
+
+The HTML request succeeds, but the next request can land at a colo whose
+configuration still selects the previous version. Its asset manifest does not
+contain the file the browser needs. This mismatch between HTML and assets is
+**version skew**, and it can cause a brief 404 during deployment.
+
+## What this repro shows
+
+The HTML puts its Worker version ID in the asset URL. A Request Header Transform
+Rule converts that query parameter into a version override header, so the asset
+request selects the same version as the HTML.
+
+This repro proves that an asset can be served from a version at **0% traffic**,
+provided that version is included in the receiving colo's deployment configuration.
 
 ## The request
 
